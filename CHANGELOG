@@ -1,0 +1,20 @@
+# Changelog
+
+Русская версия: [CHANGELOG.ru.md](CHANGELOG.ru.md)
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [0.1.0] - 2026-06-16
+
+### Added
+
+- Initial public release of `hm-openrouter-monitoring`.
+- Bilingual repository documentation in English and Russian.
+- Manual installation, customization, and Hermes prompt guides.
+- Public-safe Hermes skill documentation.
+- Sanitized OpenRouter monitoring scripts.
+- Example cron and JSON state files.
+- Pytest-based tests for watchdog logic.
+- GitHub Actions workflow for automated tests.
