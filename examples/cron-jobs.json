@@ -1,0 +1,27 @@
+{
+  "jobs": [
+    {
+      "name": "openrouter-watchdog",
+      "schedule": "0 * * * *",
+      "no_agent": true,
+      "script": "/opt/hermes/local-scripts/openrouter_watchdog.py",
+      "description": "Frequent OpenRouter watchdog. Collects state without using the LLM."
+    },
+    {
+      "name": "openrouter-anomaly-analyzer",
+      "schedule": "0 9 * * *",
+      "no_agent": false,
+      "skills": ["openrouter-monitoring"],
+      "script": "/opt/hermes/local-scripts/openrouter_anomaly_analyzer.py",
+      "deliver": "origin",
+      "description": "Runs only when anomaly data exists and produces a short operator-facing explanation."
+    },
+    {
+      "name": "openrouter-daily-brief",
+      "schedule": "30 8 * * *",
+      "no_agent": true,
+      "script": "/opt/hermes/local-scripts/openrouter_daily_brief.py",
+      "description": "Optional daily summary report. Enable only if the owner wants this feature."
+    }
+  ]
+}
