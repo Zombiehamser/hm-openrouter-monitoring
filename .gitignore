@@ -22,3 +22,9 @@ htmlcov/
 
 tmp/
 *.log
+
+# Infrastructure-specific documentation (local only)
+docs/hermes-vscode-mcp.md
+
+# Temporary test files
+tmp_*.py

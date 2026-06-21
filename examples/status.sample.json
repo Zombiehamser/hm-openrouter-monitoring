@@ -1,10 +1,9 @@
 {
-  "timestamp": "2026-06-16T09:00:00+00:00",
-  "epoch": 1781590800.0,
+  "timestamp": "2026-06-21T10:00:00+00:00",
+  "epoch": 1781596800.0,
   "balance": 12.84,
-  "total_usage": 10.23,
-  "usage_daily": 1.03,
-  "usage_daily_computed": 1.03,
+  "total_usage": 45.50,
+  "usage_daily_computed": 0.95,
   "usage_daily_api": 1.03,
   "key_label": "default"
 }

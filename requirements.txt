@@ -1,1 +1,7 @@
-requests>=2.31.0
+# hm-openrouter-monitoring uses only stdlib for all runtime scripts.
+# pytest is a test dependency only — install it separately:
+#   uv pip install pytest
+# or with the requirement file:
+#   uv pip install -r requirements.txt
+#
+pytest>=8.0

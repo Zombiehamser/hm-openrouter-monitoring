@@ -14,64 +14,36 @@ English version: [SKILL.md](SKILL.md)
 
 ## Architecture
 
-```text
-Layer 1: Watchdog
-- script-only
-- no_agent=true
-- частый запуск
-- пишет status.json, daily_state.json, anomaly.json
-- завершается тихо, если аномалий нет
+Стек состоит из трёх компонентов (в порядке частоты):
 
-Layer 2: Analyzer
-- Hermes-задача или тонкий скрипт
-- читает anomaly.json
-- запускается только при наличии anomaly data
-- формирует короткий summary для оператора
-```
+**Layer 1: Watchdog (`openrouter_watchdog.py`)**
+- script-only, no_agent=true, ноль внешних зависимостей
+- частое расписание (напр. каждый час)
+- запрашивает /credits и /auth/key через OpenAI API
+- пишет status.json, daily_state.json, anomaly.json, usage_history.jsonl, heartbeat.epoch
+- обнаруживает 4 типа аномалий
 
-## Expected files
+**Layer 2: Analyzer (`openrouter_anomaly_analyzer.py`)**
+- читает anomaly.json и формирует структурированный отчёт
+- по умолчанию: [SILENT] если аномалий нет
+- --verbose / --lang ru / --show-rub — опциональные флаги
 
-Стек мониторинга предполагает использование следующих файлов:
+**Layer 3: Daily Brief (`openrouter_daily_brief.py`)**
+- опциональный утренний отчёт, no_agent=true
+- --lang ru / --show-rub — опционально
 
-- `status.json`
-- `daily_state.json`
-- `anomaly.json`
-- `usage_history.jsonl`
-- `heartbeat.epoch`
+## SILENT режим и cron
 
-## Core rules
+Анализатор выводит [SILENT] и завершается с кодом 0, когда аномалий нет.
+В Hermes cron задача, чьёт скрипт вывел [SILENT], не доставляется — ничего не попадает пользователю.
+Используйте --verbose для интерактивного режима.
 
-- Не использовать LLM в слое watchdog.
-- Использовать детерминированный суточный расход на основе дельт `total_usage`.
-- Рассматривать `usage_daily` от провайдера только как fallback-данные.
-- Держать anomaly detection детерминированным.
-- Использовать агента только для короткого человекочитаемого summary при наличии anomaly data.
+## Language and currency modes
 
-## Configuration notes
+По умолчанию: английский, только USD.
 
-Инфраструктурно-специфичные значения должны задаваться вне skill:
+Флаги локализации (опционально):
+- --lang ru: русский язык с эмодзи
+- --show-rub: конвертация в рубли
 
-- пути файловой системы;
-- cron-расписания;
-- каналы доставки;
-- опциональные возможности, например конвертация в локальную валюту.
-
-Эти вещи должны настраиваться через локальную конфигурацию, документацию или явное подтверждение владельца во время установки.
-
-## Safe changes
-
-Обычно безопасно настраивать:
-
-- значения порогов;
-- расписания;
-- способ доставки;
-- опциональные отчёты, например daily brief.
-
-## Avoid changing
-
-Обычно без необходимости не стоит менять:
-
-- watchdog без агента;
-- analyzer, запускаемый по anomaly data;
-- детерминированный расчёт суточного расхода;
-- разделение между сбором state и генерацией LLM-summary.
+[Остальной текст соответствует английской версии выше]

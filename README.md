@@ -127,6 +127,39 @@ If Hermes is used to install this project, it should ask the owner which optiona
     └── hermes-prompt.ru.md
 ```
 
+## Language & Output Modes
+
+All CLI scripts use English output by default.
+
+### Anomaly analyzer (`openrouter_anomaly_analyzer.py`)
+
+```bash
+python3 scripts/openrouter_anomaly_analyzer.py                  # EN, [SILENT] if no anomaly
+python3 scripts/openrouter_anomaly_analyzer.py --verbose         # EN, always print status
+python3 scripts/openrouter_anomaly_analyzer.py --lang ru         # RU, with emoji
+python3 scripts/openrouter_anomaly_analyzer.py --show-rub        # EN + RUB conversion
+python3 scripts/openrouter_anomaly_analyzer.py --lang ru --show-rub  # RU + RUB
+```
+
+Default behavior (`[SILENT]`): when no anomaly exists, the script prints exactly
+`[SILENT]` and exits. This suppresses Hermes cron delivery so nothing reaches
+the user. Use `--verbose` to always get a human-readable status message.
+
+### Daily brief (`openrouter_daily_brief.py`)
+
+```bash
+python3 scripts/openrouter_daily_brief.py                        # EN, USD only
+python3 scripts/openrouter_daily_brief.py --show-rub             # EN + RUB conversion
+python3 scripts/openrouter_daily_brief.py --lang ru              # RU, with emoji
+```
+
+### Mode notes
+
+- **EN mode** (default): clean plain text suitable for logs, CI, email, CLI, and all platforms.
+- **RU mode** (`--lang ru`): Russian text with emoji, designed for human-oriented channels such as Telegram.
+- **RUB conversion** (`--show-rub`): fetches the current USD/RUB exchange rate from er-api.com and includes RUB equivalents.
+- Both `--lang ru` and `--show-rub` are **optional**. They must be explicitly enabled — the project works fully without them.
+
 ## Development
 
 Run tests locally:

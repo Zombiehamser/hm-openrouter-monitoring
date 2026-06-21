@@ -95,3 +95,48 @@ If you adapt these scripts from an internal deployment, do not publish:
 - private hostnames;
 - internal usernames;
 - infrastructure-specific schedules unless they are clearly marked as examples.
+## Language and currency modes
+
+All CLI scripts default to English output with USD values only.
+
+### Optional flags
+
+| Flag | Scripts | Effect |
+|---|---|---|
+| `--lang ru` | analyzer, brief | Russian text with emoji, for Telegram-style delivery |
+| `--show-rub` | analyzer, brief | Fetch USD/RUB rate from er-api.com and add RUB equivalents |
+| `--verbose` (`-v`) | analyzer | Always print status message; disable [SILENT] mode |
+
+### [SILENT] behavior
+
+The anomaly analyzer prints `[SILENT]` when no anomaly file exists.
+In Hermes cron, a task whose script prints exactly `[SILENT]` suppresses
+delivery — nothing is sent to the user. Use `--verbose` for interactive use.
+
+### Enabling RUB and Russian
+
+These are **opt-in only**. Example commands:
+
+```bash
+# English, USD only (default — suitable for all platforms)
+python3 /path/to/openrouter_anomaly_analyzer.py
+python3 /path/to/openrouter_daily_brief.py
+
+# Russian with RUB (Telegram-oriented)
+python3 /path/to/openrouter_anomaly_analyzer.py --lang ru --show-rub
+python3 /path/to/openrouter_daily_brief.py --lang ru --show-rub
+```
+
+No environment variables are required for these flags. The project works fully
+without them. Other users can adapt the currency flag to their needs (EUR, GBP,
+JPY, etc.) by wrapping the script or modifying the exchange-rate URL.
+
+### Environment variables for thresholds
+
+The watchdog now supports these additional environment variables:
+
+- `OPENROUTER_DAILY_THRESHOLD_USD` — daily spend threshold (default: 5.0)
+- `OPENROUTER_BALANCE_THRESHOLD_USD` — remaining balance threshold (default: 3.0)
+- `OPENROUTER_TOTAL_USAGE_THRESHOLD_USD` — total usage threshold (default: 50.0)
+- `OPENROUTER_DAILY_SPIKE_PCT` — daily growth spike percentage (default: 300)
+- `OPENROUTER_SAVE_RAW_RESPONSES` — set to "true" to save raw API responses for debugging

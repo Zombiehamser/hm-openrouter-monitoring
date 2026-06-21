@@ -5,23 +5,32 @@
       "schedule": "0 * * * *",
       "no_agent": true,
       "script": "/opt/hermes/local-scripts/openrouter_watchdog.py",
-      "description": "Frequent OpenRouter watchdog. Collects state without using the LLM."
+      "description": "Collects balance and usage from OpenRouter every hour. Zero external dependencies."
     },
     {
       "name": "openrouter-anomaly-analyzer",
       "schedule": "0 9 * * *",
-      "no_agent": false,
-      "skills": ["openrouter-monitoring"],
+      "no_agent": true,
       "script": "/opt/hermes/local-scripts/openrouter_anomaly_analyzer.py",
       "deliver": "origin",
-      "description": "Runs only when anomaly data exists and produces a short operator-facing explanation."
+      "description": "Checks for anomalies and produces a report. [SILENT] when nothing to report (no delivery)."
     },
     {
       "name": "openrouter-daily-brief",
       "schedule": "30 8 * * *",
       "no_agent": true,
       "script": "/opt/hermes/local-scripts/openrouter_daily_brief.py",
-      "description": "Optional daily summary report. Enable only if the owner wants this feature."
+      "deliver": "origin",
+      "description": "Optional daily summary of balance and 24h spend. Enable only if the owner wants this feature."
+    },
+    {
+      "name": "openrouter-anomaly-analyzer-ru",
+      "schedule": "0 10 * * *",
+      "no_agent": true,
+      "script": "/opt/hermes/local-scripts/openrouter_anomaly_analyzer.py",
+      "deliver": "origin",
+      "args": ["--lang", "ru", "--show-rub"],
+      "description": "OPTIONAL — Russian-language analyzer with RUB conversion. Only for Telegram-style delivery."
     }
   ]
 }

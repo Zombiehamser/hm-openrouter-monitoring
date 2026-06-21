@@ -127,6 +127,39 @@ uv pip install -r requirements.txt
     └── hermes-prompt.ru.md
 ```
 
+## Язык и режимы вывода
+
+Все CLI-скрипты по умолчанию используют английский язык.
+
+### Анализатор аномалий (`openrouter_anomaly_analyzer.py`)
+
+```bash
+python3 scripts/openrouter_anomaly_analyzer.py                  # EN, [SILENT] если нет аномалий
+python3 scripts/openrouter_anomaly_analyzer.py --verbose         # EN, всегда выводить статус
+python3 scripts/openrouter_anomaly_analyzer.py --lang ru         # RU, с эмодзи
+python3 scripts/openrouter_anomaly_analyzer.py --show-rub        # EN + конвертация в рубли
+python3 scripts/openrouter_anomaly_analyzer.py --lang ru --show-rub  # RU + рубли
+```
+
+Поведение по умолчанию (`[SILENT]`): если аномалий нет, скрипт печатает ровно
+`[SILENT]` и завершается. Это подавляет доставку через Hermes cron. Используйте
+`--verbose`, чтобы всегда получать человекочитаемое сообщение.
+
+### Ежедневный отчёт (`openrouter_daily_brief.py`)
+
+```bash
+python3 scripts/openrouter_daily_brief.py                        # EN, только USD
+python3 scripts/openrouter_daily_brief.py --show-rub             # EN + конвертация в рубли
+python3 scripts/openrouter_daily_brief.py --lang ru              # RU, с эмодзи
+```
+
+### Примечания
+
+- **EN-режим** (по умолчанию): чистый текст, подходит для логов, CI, email, CLI и любых платформ.
+- **RU-режим** (`--lang ru`): русский текст с эмодзи, предназначен для человекоориентированных каналов (например, Telegram).
+- **RUB-конвертация** (`--show-rub`): получает текущий курс USD/RUB с er-api.com и добавляет эквиваленты в рублях.
+- Оба флага (`--lang ru` и `--show-rub`) — опциональны. Проект полностью работает без них.
+
 ## Development
 
 Запусти тесты локально:
