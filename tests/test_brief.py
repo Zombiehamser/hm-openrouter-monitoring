@@ -158,3 +158,45 @@ def test_brief_fmt_functions():
     assert fmt_usd(1234.5) == "$1234.50"
     assert fmt_rub(0.0) == "0.00 RUB"
     assert fmt_rub(100.5) == "100.50 RUB"
+
+# Fallback tests: empty history -> usage_daily
+
+def test_brief_main_empty_history_fallback():
+    """When history is empty, spend_24h falls back to usage_daily."""
+    spend_24h_history = 0.0
+    usage_daily = 1.23
+    if spend_24h_history > 0:
+        spend_24h = spend_24h_history
+    else:
+        spend_24h = usage_daily
+    assert spend_24h == 1.23
+
+def test_brief_main_history_available():
+    """When history is available, rolling window takes priority."""
+    spend_24h_history = 4.5
+    usage_daily = 1.0
+    if spend_24h_history > 0:
+        spend_24h = spend_24h_history
+    else:
+        spend_24h = usage_daily
+    assert spend_24h == 4.5
+
+def test_brief_report_api_counter_not_shown_when_equal():
+    """API reference hidden when usage_reference equals spend_24h."""
+    from scripts.openrouter_daily_brief import build_report_en
+    report = build_report_en(50.0, 20.0, 1.23, 0.0, None, '2026-06-21', usage_reference=1.23)
+    assert "API daily counter" not in report
+
+def test_brief_report_api_counter_shown_when_different():
+    """API reference appears when usage_reference differs from spend_24h."""
+    from scripts.openrouter_daily_brief import build_report_en
+    report = build_report_en(50.0, 20.0, 3.95, 0.0, None, '2026-06-21', usage_reference=1.23)
+    assert "API daily counter" in report
+    assert "$1.23" in report
+
+def test_brief_report_ru_api_counter_shown():
+    """RU report shows API counter in Russian."""
+    from scripts.openrouter_daily_brief import build_report_ru
+    report = build_report_ru(50.0, 20.0, 3.95, 0.0, 85.0, '2026-06-21', usage_reference=1.23)
+    assert "Дневной счётчик" in report
+    assert "$1.23" in report

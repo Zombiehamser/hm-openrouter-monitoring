@@ -6,15 +6,26 @@ English version: [CHANGELOG.md](CHANGELOG.md)
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.0] - 2026-06-16
+## [0.2.0] - 2026-06-21
 
 ### Добавлено
 
-- Первый публичный релиз `hm-openrouter-monitoring`.
-- Двуязычная документация репозитория на английском и русском языках.
-- Инструкции по ручной установке, адаптации и Hermes prompts.
-- Public-safe документация для Hermes skill.
-- Sanitized-версии скриптов мониторинга OpenRouter.
-- Примеры cron-конфигурации и JSON state-файлов.
-- Тесты на базе pytest для логики watchdog.
-- GitHub Actions workflow для автоматического запуска тестов.
+- Rolling 24h spend: daily brief теперь вычисляет расход за 24ч через дельту
+  total_usage по временному окну, а не через /auth/key.usage_daily (календарный
+  счётчик, сбрасывается в 00:00 UTC). Это соответствует метрике "Past 1 Day"
+  в панели OpenRouter.
+- Параметр usage_reference в report builders: usage_daily из /auth/key
+  показывается как вторичная reference-строка при отличии от rolling window.
+- Тесты для fallback при пустой истории.
+
+### Изменено
+
+- daily_brief main(): rolling history window теперь PRIMARY source of truth
+  для 24h расхода. Fallback на usage_daily только при пустой истории.
+
+### Исправлено
+
+- Daily brief теперь использует rolling 24h дельту total_usage из истории
+  как основной источник, вместо /auth/key.usage_daily (календарный счётчик,
+  сбрасывается в 00:00 UTC). Это синхронизирует отчёт с метрикой "Past 1 Day"
+  в панели OpenRouter.

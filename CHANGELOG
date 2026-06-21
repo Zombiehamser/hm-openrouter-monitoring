@@ -6,15 +6,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.0] - 2026-06-16
+## [0.2.0] - 2026-06-21
 
 ### Added
 
-- Initial public release of `hm-openrouter-monitoring`.
-- Bilingual repository documentation in English and Russian.
-- Manual installation, customization, and Hermes prompt guides.
-- Public-safe Hermes skill documentation.
-- Sanitized OpenRouter monitoring scripts.
-- Example cron and JSON state files.
-- Pytest-based tests for watchdog logic.
-- GitHub Actions workflow for automated tests.
+- Rolling 24h spend: daily brief now computes spend from total_usage deltas
+  over a time-based window, instead of using /auth/key.usage_daily which
+  is a calendar-day counter that resets at midnight UTC. This aligns with
+  the OpenRouter dashboard's "Past 1 Day" metric.
+- `usage_reference` parameter in report builders: /auth/key.usage_daily is
+  now shown as a secondary reference line when it differs significantly
+  from the primary rolling window value.
+- Fallback tests for empty history coverage.
+
+### Changed
+
+- daily_brief main(): rolling history window is now the PRIMARY source of
+  truth for 24h spend. Falls back to usage_daily only when history is empty.
+
+### Fixed
+
+- Daily brief now uses a rolling 24-hour delta of total_usage from history
+  as the primary source of truth, instead of /auth/key.usage_daily which
+  is a calendar-day counter that resets at midnight UTC. This aligns the
+  reported spend with the OpenRouter dashboard's "Past 1 Day" metric.

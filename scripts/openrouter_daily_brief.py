@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""OpenRouter Daily Brief — periodic summary of balance and usage.
+"""
+OpenRouter Daily Brief - periodic summary of balance and usage.
 
 Fetches credits from OpenRouter API, computes remaining balance and 24h
 spend, and prints a formatted report. Designed for no_agent=True cron
 delivery (the output is delivered directly to the user).
+
+Primary 24h spend: rolling delta of total_usage from usage_history.jsonl
+(time-based window). Falls back to usage_daily from /auth/key if history
+is not available.
 
 Usage:
   python3 scripts/openrouter_daily_brief.py              # English, USD only
@@ -26,7 +31,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 
-# ── Paths ───────────────────────────────────────────────────────────
+# Paths
 BASE_DIR = os.environ.get(
     "OPENROUTER_WATCHDOG_BASE_DIR",
     "/opt/data/openrouter-watchdog",
@@ -36,7 +41,7 @@ STATE_DIR = os.environ.get(
     os.path.join(BASE_DIR, "state"),
 )
 
-# ── API ─────────────────────────────────────────────────────────────
+# API
 OPENROUTER_API_KEY: str = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_API_BASE = "https://openrouter.ai/api/v1"
 ER_API_URL = "https://open.er-api.com/v6/latest/USD"
@@ -63,7 +68,7 @@ def _or_api_get(path: str) -> dict | None:
         return None
 
 
-# ── Exchange rate ───────────────────────────────────────────────────
+# Exchange rate
 ER_API_TIMEOUT = 15
 
 
@@ -80,7 +85,7 @@ def get_usd_rub() -> float | None:
     return None
 
 
-# ── History helpers ────────────────────────────────────────────────
+# History helpers
 def read_history() -> list[dict]:
     """Read usage_history.jsonl from state directory."""
     path = os.path.join(STATE_DIR, "usage_history.jsonl")
@@ -106,7 +111,7 @@ def compute_spend_24h_from_history(
 
     Uses epoch timestamps to find the snapshot closest to (now - 24h),
     then returns the delta from that snapshot to the latest record.
-    This is more accurate than assuming a fixed number of records = 24h.
+    This is the PRIMARY source of truth for 24h spend.
     """
     if not history:
         return 0.0
@@ -143,7 +148,7 @@ def compute_spend_24h_from_history(
     return max(0.0, latest_total - prev_total)
 
 
-# ── Report formatter ───────────────────────────────────────────────
+# Report formatter
 def fmt_usd(v: float) -> str:
     return f"${v:.2f}"
 
@@ -159,11 +164,12 @@ def build_report_en(
     spend_24h_history: float,
     usd_rub: float | None,
     now_date: str,
+    usage_reference: float | None = None,
 ) -> str:
     """Build morning report in English (default)."""
     lines: list[str] = []
     lines.append("=" * 50)
-    lines.append(f"  OpenRouter Daily Brief — {now_date}")
+    lines.append(f"  OpenRouter Daily Brief {now_date}")
     lines.append("=" * 50)
     lines.append(f"  Remaining balance:  {fmt_usd(remaining_balance)}")
     lines.append(f"  Total usage:        {fmt_usd(total_usage)}")
@@ -180,6 +186,9 @@ def build_report_en(
     if spend_24h_history > 0 and abs(spend_24h_history - spend_24h) > 0.001:
         lines.append(f"  24h spend (history window): {fmt_usd(spend_24h_history)}")
 
+    if usage_reference is not None and usage_reference > 0.001 and abs(usage_reference - spend_24h) > 0.01:
+        lines.append(f"  API daily counter:   {fmt_usd(usage_reference)}")
+
     lines.append("=" * 50)
     return "\n".join(lines)
 
@@ -191,11 +200,12 @@ def build_report_ru(
     spend_24h_history: float,
     usd_rub: float | None,
     now_date: str,
+    usage_reference: float | None = None,
 ) -> str:
     """Build morning report in Russian with emoji."""
     lines: list[str] = []
     lines.append("━" * 45)
-    lines.append(f"  💳 OpenRouter — утренний отчёт {now_date}")
+    lines.append(f"  💳 OpenRouter утренний отчёт {now_date}")
     lines.append("━" * 45)
     lines.append(f"  Остаток сейчас:  {fmt_usd(remaining_balance)}")
     lines.append(f"  Общий расход:    {fmt_usd(total_usage)}")
@@ -212,14 +222,17 @@ def build_report_ru(
     if spend_24h_history > 0 and abs(spend_24h_history - spend_24h) > 0.001:
         lines.append(f"  24ч (history window): {fmt_usd(spend_24h_history)}")
 
+    if usage_reference is not None and usage_reference > 0.001 and abs(usage_reference - spend_24h) > 0.01:
+        lines.append(f"  Дневной счётчик API: {fmt_usd(usage_reference)}")
+
     lines.append("━" * 45)
     return "\n".join(lines)
 
 
-# ── CLI entry point ────────────────────────────────────────────────
+# CLI entry point
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="OpenRouter Daily Brief — periodic summary of balance and usage.",
+        description="OpenRouter Daily Brief - periodic summary of balance and usage.",
     )
     parser.add_argument(
         "--show-rub",
@@ -241,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     # 1. Get OpenRouter credits
     raw_credits = _or_api_get("/credits")
     if not raw_credits or not isinstance(raw_credits, dict):
-        print("[brief] Failed to fetch credits — aborting", file=sys.stderr)
+        print("[brief] Failed to fetch credits - aborting", file=sys.stderr)
         return 1
 
     if "data" in raw_credits:
@@ -260,12 +273,16 @@ def main(argv: list[str] | None = None) -> int:
         key_data = raw_key or {}
     usage_daily = float(key_data.get("usage_daily", 0.0) or 0.0)
 
-    # 3. Compute 24h spend from usage_history (time-based window)
+    # 3. Rolling 24h spend from usage_history (time-based window) - PRIMARY
     history = read_history()
     spend_24h_history = compute_spend_24h_from_history(history) if history else 0.0
 
-    # Use usage_daily as the primary 24h metric (provider's own calculation)
-    spend_24h = usage_daily
+    # usage_daily from /auth/key is a calendar-day counter (resets midnight UTC).
+    # The rolling history window is the accurate "last 24h" metric.
+    if spend_24h_history > 0:
+        spend_24h = spend_24h_history
+    else:
+        spend_24h = usage_daily
 
     # 4. Optional: USD/RUB exchange rate
     usd_rub = get_usd_rub() if args.show_rub else None
@@ -277,11 +294,13 @@ def main(argv: list[str] | None = None) -> int:
         report = build_report_ru(
             remaining_balance, total_usage, spend_24h,
             spend_24h_history, usd_rub, now_date,
+            usage_reference=usage_daily,
         )
     else:
         report = build_report_en(
             remaining_balance, total_usage, spend_24h,
             spend_24h_history, usd_rub, now_date,
+            usage_reference=usage_daily,
         )
 
     print(report)
